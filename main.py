@@ -1,6 +1,7 @@
 import ast
 from typing import Any, Generator, Set, Tuple, Union, Dict, List
 from typing_extensions import Final
+import argparse
 
 
 class ConstantModificationChecker:
@@ -54,7 +55,10 @@ class ConstantModificationChecker:
 
     def current_scope(self) -> str:
         return ".".join(self.scope_stack)
-    def check_assignment(self, node: Union[ast.Assign, ast.AnnAssign]) -> Generator[Tuple[int, int, str, type], Any, None]:
+
+    def check_assignment(
+        self, node: Union[ast.Assign, ast.AnnAssign]
+    ) -> Generator[Tuple[int, int, str, type], Any, None]:
         targets = node.targets if isinstance(node, ast.Assign) else [node.target]
         for target in targets:
             if isinstance(target, ast.Name) and target.id.isupper():
@@ -71,7 +75,10 @@ class ConstantModificationChecker:
             elif isinstance(target, ast.Attribute) and target.attr.isupper():
                 if isinstance(target.value, ast.Name) and target.value.id == "self":
                     class_scope = ".".join(self.scope_stack[:-1])
-                    if class_scope in self.constants and target.attr in self.constants[class_scope]:
+                    if (
+                        class_scope in self.constants
+                        and target.attr in self.constants[class_scope]
+                    ):
                         yield (
                             node.lineno,
                             node.col_offset,
@@ -79,7 +86,9 @@ class ConstantModificationChecker:
                             type(self),
                         )
 
-    def check_aug_assignment(self, node: ast.AugAssign) -> Generator[Tuple[int, int, str, type], Any, None]:
+    def check_aug_assignment(
+        self, node: ast.AugAssign
+    ) -> Generator[Tuple[int, int, str, type], Any, None]:
         if isinstance(node.target, ast.Name) and node.target.id.isupper():
             yield (
                 node.lineno,
@@ -88,9 +97,15 @@ class ConstantModificationChecker:
                 type(self),
             )
         elif isinstance(node.target, ast.Attribute) and node.target.attr.isupper():
-            if isinstance(node.target.value, ast.Name) and node.target.value.id == "self":
+            if (
+                isinstance(node.target.value, ast.Name)
+                and node.target.value.id == "self"
+            ):
                 class_scope = ".".join(self.scope_stack[:-1])
-                if class_scope in self.constants and node.target.attr in self.constants[class_scope]:
+                if (
+                    class_scope in self.constants
+                    and node.target.attr in self.constants[class_scope]
+                ):
                     yield (
                         node.lineno,
                         node.col_offset,
@@ -98,9 +113,16 @@ class ConstantModificationChecker:
                         type(self),
                     )
 
-    def check_call(self, node: ast.Call) -> Generator[Tuple[int, int, str, type], Any, None]:
-        if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name):
-            if node.func.value.id.isupper() and node.func.attr not in self.non_modifying_methods:
+    def check_call(
+        self, node: ast.Call
+    ) -> Generator[Tuple[int, int, str, type], Any, None]:
+        if isinstance(node.func, ast.Attribute) and isinstance(
+            node.func.value, ast.Name
+        ):
+            if (
+                node.func.value.id.isupper()
+                and node.func.attr not in self.non_modifying_methods
+            ):
                 yield (
                     node.lineno,
                     node.col_offset,
@@ -110,13 +132,16 @@ class ConstantModificationChecker:
 
     @classmethod
     def add_options(cls, parser: Any) -> None:
-        parser.add_option(
-            "--non-modifying-methods",
-            default=",".join(cls.DEFAULT_NON_MODIFYING_METHODS),
-            parse_from_config=True,
-            comma_separated_list=True,
-            help="Comma-separated list of methods considered non-modifying",
-        )
+        try:
+            parser.add_option(
+                "--non-modifying-methods",
+                default=",".join(cls.DEFAULT_NON_MODIFYING_METHODS),
+                parse_from_config=True,
+                comma_separated_list=True,
+                help="Comma-separated list of methods considered non-modifying",
+            )
+        except argparse.ArgumentError:
+            pass
 
     @classmethod
     def parse_options(cls, options: Any) -> None:

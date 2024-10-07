@@ -35,7 +35,7 @@ normal_var = 20
 """,
             2,
             [2, 4],
-            ['C001', 'C005'],
+            ["C001", "C005"],
         ),
         (
             """
@@ -92,7 +92,7 @@ CONSTANT += 1
 """,
             1,
             [2],
-            ['C003'],
+            ["C003"],
         ),
         (
             """
@@ -101,7 +101,7 @@ CONSTANT = 200
 """,
             1,
             [2],
-            ['C001'],
+            ["C001"],
         ),
         (
             """
@@ -110,7 +110,7 @@ CONSTANT.extend([4, 5])
 """,
             1,
             [2],
-            ['C005'],
+            ["C005"],
         ),
         (
             """
@@ -122,7 +122,7 @@ class MyClass:
 """,
             1,
             [5],
-            ['C002'],
+            ["C002"],
         ),
     ],
 )
@@ -132,8 +132,14 @@ def test_constant_modification(code, expected_errors, expected_lines, expected_c
         len(results) == expected_errors
     ), f"Expected {expected_errors} errors, got {len(results)} - {results}"
     if results:
-        assert [result[0] for result in results] == expected_lines, f"Expected lines {expected_lines}, got {[result[0] for result in results]}"
-        assert [result[2][:4] for result in results] == expected_codes, f"Expected codes {expected_codes}, got {[result[2][:4] for result in results]}"
+        assert [
+            result[0] for result in results
+        ] == expected_lines, (
+            f"Expected lines {expected_lines}, got {[result[0] for result in results]}"
+        )
+        assert [
+            result[2][:4] for result in results
+        ] == expected_codes, f"Expected codes {expected_codes}, got {[result[2][:4] for result in results]}"
 
 
 def test_multiple_assignments():
@@ -172,8 +178,13 @@ class MyClass:
 """
     results = run_checker(code)
     assert len(results) == 2, f"Expected 2 errors, got {len(results)} - {results}"
-    assert "C001 Reassignment of constant 'FUNC_CONSTANT' in scope '.func1'" in results[0][2], results
-    assert "C002 Modification of class constant 'CLASS_CONSTANT'" in results[1][2], results
+    assert (
+        "C001 Reassignment of constant 'FUNC_CONSTANT' in scope '.func1'"
+        in results[0][2]
+    ), results
+    assert (
+        "C002 Modification of class constant 'CLASS_CONSTANT'" in results[1][2]
+    ), results
 
 
 def test_plugin_function():
@@ -199,25 +210,29 @@ def test_add_options():
     ConstantModificationChecker.add_options(parser)
     assert len(parser.options) == 1
     option_args, option_kwargs = parser.options[0]
-    
-    assert '--non-modifying-methods' in option_args
-    assert option_kwargs['default'] == ','.join(ConstantModificationChecker.DEFAULT_NON_MODIFYING_METHODS)
-    assert option_kwargs['parse_from_config'] is True
-    assert option_kwargs['comma_separated_list'] is True
-    assert 'help' in option_kwargs
+
+    assert "--non-modifying-methods" in option_args
+    assert option_kwargs["default"] == ",".join(
+        ConstantModificationChecker.DEFAULT_NON_MODIFYING_METHODS
+    )
+    assert option_kwargs["parse_from_config"] is True
+    assert option_kwargs["comma_separated_list"] is True
+    assert "help" in option_kwargs
 
 
 def test_parse_options():
     class MockOptions:
         def __init__(self):
-            self.non_modifying_methods = ['method1', 'method2']
+            self.non_modifying_methods = ["method1", "method2"]
 
     options = MockOptions()
     original_methods = ConstantModificationChecker.DEFAULT_NON_MODIFYING_METHODS.copy()
-    
+
     try:
         ConstantModificationChecker.parse_options(options)
-        assert ConstantModificationChecker.non_modifying_methods == set(['method1', 'method2'])
+        assert ConstantModificationChecker.non_modifying_methods == set(
+            ["method1", "method2"]
+        )
     finally:
         # Restore the original default methods after the test
         ConstantModificationChecker.non_modifying_methods = original_methods
@@ -225,10 +240,21 @@ def test_parse_options():
 
 def test_default_non_modifying_methods():
     expected_default_methods = {
-        "get", "keys", "values", "items", "copy", "deepcopy",
-        "__getitem__", "__len__", "__iter__", "__contains__"
+        "get",
+        "keys",
+        "values",
+        "items",
+        "copy",
+        "deepcopy",
+        "__getitem__",
+        "__len__",
+        "__iter__",
+        "__contains__",
     }
-    assert ConstantModificationChecker.DEFAULT_NON_MODIFYING_METHODS == expected_default_methods
+    assert (
+        ConstantModificationChecker.DEFAULT_NON_MODIFYING_METHODS
+        == expected_default_methods
+    )
 
 
 def test_async_function():
@@ -239,7 +265,10 @@ async def async_func():
 """
     results = run_checker(code)
     assert len(results) == 1
-    assert "C001 Reassignment of constant 'ASYNC_CONSTANT' in scope '.async_func'" in results[0][2]
+    assert (
+        "C001 Reassignment of constant 'ASYNC_CONSTANT' in scope '.async_func'"
+        in results[0][2]
+    )
 
 
 def test_nested_scopes():
@@ -253,8 +282,14 @@ def outer():
 """
     results = run_checker(code)
     assert len(results) == 2
-    assert "C001 Reassignment of constant 'INNER_CONSTANT' in scope '.outer.inner'" in results[0][2]
-    assert "C001 Reassignment of constant 'OUTER_CONSTANT' in scope '.outer'" in results[1][2]
+    assert (
+        "C001 Reassignment of constant 'INNER_CONSTANT' in scope '.outer.inner'"
+        in results[0][2]
+    )
+    assert (
+        "C001 Reassignment of constant 'OUTER_CONSTANT' in scope '.outer'"
+        in results[1][2]
+    )
 
 
 def test_class_method_constant():
@@ -267,7 +302,10 @@ class TestClass:
 """
     results = run_checker(code)
     assert len(results) == 1
-    assert "C001 Reassignment of constant 'CLASS_METHOD_CONSTANT' in scope '.TestClass.class_method'" in results[0][2]
+    assert (
+        "C001 Reassignment of constant 'CLASS_METHOD_CONSTANT' in scope '.TestClass.class_method'"
+        in results[0][2]
+    )
 
 
 def test_augmented_assignment_in_class():
@@ -280,7 +318,9 @@ class TestClass:
 """
     results = run_checker(code)
     assert len(results) == 1
-    assert "C004 Augmented assignment to class constant 'CLASS_CONSTANT'" in results[0][2]
+    assert (
+        "C004 Augmented assignment to class constant 'CLASS_CONSTANT'" in results[0][2]
+    )
 
 
 def test_non_modifying_method_call():
