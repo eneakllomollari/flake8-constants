@@ -247,6 +247,8 @@ def test_default_non_modifying_methods():
         "items",
         "copy",
         "deepcopy",
+        "encode",
+        "decode",
         "__getitem__",
         "__len__",
         "__iter__",
