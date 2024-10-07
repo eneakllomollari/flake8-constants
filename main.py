@@ -72,19 +72,34 @@ class ConstantModificationChecker:
                     )
                 else:
                     self.constants[current_scope].add(target.id)
+                    # Check if the constant is a mutable type
+                    if isinstance(node, ast.Assign):
+                        value = node.value
+                    elif isinstance(node, ast.AnnAssign):
+                        value = node.value
+                    else:
+                        continue
+
+                    if isinstance(value, (ast.List, ast.Dict, ast.Set)):
+                        yield (
+                            node.lineno,
+                            node.col_offset,
+                            f"C006 Constant '{target.id}' is defined as a mutable type",
+                            type(self),
+                        )
+
             elif isinstance(target, ast.Attribute) and target.attr.isupper():
                 if isinstance(target.value, ast.Name) and target.value.id == "self":
                     class_scope = ".".join(self.scope_stack[:-1])
-                    if (
-                        class_scope in self.constants
-                        and target.attr in self.constants[class_scope]
-                    ):
+                    if class_scope in self.constants and target.attr in self.constants[class_scope]:
                         yield (
                             node.lineno,
                             node.col_offset,
                             f"C002 Modification of class constant '{target.attr}'",
                             type(self),
                         )
+                    else:
+                        self.constants[class_scope].add(target.attr)
 
     def check_aug_assignment(
         self, node: ast.AugAssign

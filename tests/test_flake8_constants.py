@@ -33,9 +33,9 @@ CONSTANT_LIST.append('d')
 normal_var = 10
 normal_var = 20
 """,
-            2,
-            [2, 4],
-            ["C001", "C005"],
+            3,
+            [2, 3, 4],
+            ["C001", "C006", "C005"],
         ),
         (
             """
@@ -44,9 +44,9 @@ print(MAX_VALUE)
 CONSTANT_LIST = ['a', 'b', 'c']
 print(CONSTANT_LIST)
 """,
-            0,
-            [],
-            [],
+            1,
+            [3],
+            ["C006"],
         ),
         (
             """
@@ -81,9 +81,9 @@ MAPPING = {
 }
 value = MAPPING.get('type1')
 """,
-            0,
-            [],
-            [],
+            1,
+            [1],
+            ["C006"],
         ),
         (
             """
@@ -108,9 +108,9 @@ CONSTANT = 200
 CONSTANT = [1, 2, 3]
 CONSTANT.extend([4, 5])
 """,
-            1,
-            [2],
-            ["C005"],
+            2,
+            [1, 2],
+            ["C006", "C005"],
         ),
         (
             """
@@ -158,8 +158,9 @@ CONSTANT_DICT = {'key': 'value'}
 CONSTANT_DICT.update({'new_key': 'new_value'})
 """
     results = run_checker(code)
-    assert len(results) == 1
-    assert "C005 Potential modification of constant 'CONSTANT_DICT'" in results[0][2]
+    assert len(results) == 2
+    assert "C006 Constant 'CONSTANT_DICT' is defined as a mutable type" in results[0][2]
+    assert "C005 Potential modification of constant 'CONSTANT_DICT'" in results[1][2]
 
 
 def test_constant_in_different_scopes():
@@ -169,7 +170,7 @@ GLOBAL_CONSTANT = 100
 def func1():
     FUNC_CONSTANT = 200
     FUNC_CONSTANT = 300
-
+q
 class MyClass:
     CLASS_CONSTANT = 400
     
@@ -325,7 +326,8 @@ class TestClass:
 
 def test_non_modifying_method_call():
     code = """
-CONSTANT_DICT = {'key': 'value'}
+from types import MappingProxyType
+CONSTANT_DICT = MappingProxyType({'key': 'value'})
 value = CONSTANT_DICT.get('key')
 """
     results = run_checker(code)
