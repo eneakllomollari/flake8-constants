@@ -20,7 +20,7 @@ We welcome contributions to Flake8 Constants! Here are some guidelines to help y
 ## Development Environment Setup
 
 1. Fork the repository
-2. Clone your fork: `git clone https://github.com/your-username/flake8-constants.git`
+2. Clone your fork: `git clone https://github.com/eneakllomollari/flake8-constants.git`
 3. Create a virtual environment: `python -m venv venv`
 4. Activate the virtual environment: `source venv/bin/activate` (Unix) or `venv\Scripts\activate` (Windows)
 5. Install dependencies: `pip install -r requirements-dev.txt`
