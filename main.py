@@ -6,7 +6,7 @@ import argparse
 
 class ConstantModificationChecker:
     name: Final[str] = "flake8-constants"
-    version: Final[str] = "0.0.1"
+    version: Final[str] = "0.0.3"
 
     DEFAULT_NON_MODIFYING_METHODS: Final[Set[str]] = {
         "get",
